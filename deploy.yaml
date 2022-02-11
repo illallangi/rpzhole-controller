@@ -1,6 +1,7 @@
 ---
 apiVersion: v1
 data:
+  INTERVAL: "21600"
   TRANSFER: 192.0.2.1;203.0.113.2
 kind: ConfigMap
 metadata:
@@ -92,12 +93,11 @@ spec:
         volumeMounts:
         - mountPath: /etc/coredns
           name: scratch
-      - image: ghcr.io/illallangi/rpzhole-controller:latest
+      - envFrom:
+        - configMapRef:
+            name: rpzhole-controller
+        image: ghcr.io/illallangi/rpzhole-controller:latest
         imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8080
         name: controller
         ports:
         - containerPort: 8080
