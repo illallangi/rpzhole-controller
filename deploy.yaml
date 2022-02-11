@@ -1,0 +1,133 @@
+---
+apiVersion: v1
+data:
+  TRANSFER: 192.0.2.1;203.0.113.2
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: rpzhole
+  name: rpzhole-controller
+  namespace: network-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: rpzhole
+  name: rpzhole-controller
+  namespace: network-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    configmap.reloader.stakater.com/reload: rpzhole-controller
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: rpzhole
+  name: rpzhole-controller
+  namespace: network-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/name: rpzhole
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: controller
+        app.kubernetes.io/name: rpzhole
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: rpzhole-controller
+        image: ghcr.io/illallangi/coredns-notifier:v0.0.3
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /health
+            port: 8081
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: coredns
+        ports:
+        - containerPort: 53
+          name: dns
+          protocol: TCP
+        - containerPort: 9153
+          name: metrics
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: 8181
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            memory: 170Mi
+          requests:
+            cpu: 100m
+            memory: 70Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /etc/coredns
+          name: scratch
+      - image: ghcr.io/illallangi/rpzhole-controller:latest
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+        name: controller
+        ports:
+        - containerPort: 8080
+          name: web
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /etc/coredns/zones
+          name: scratch
+          subPath: zones
+      serviceAccount: rpzhole-controller
+      serviceAccountName: rpzhole-controller
+      volumes:
+      - emptyDir: {}
+        name: scratch
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: rpzhole
+  name: rpzhole-controller
+  namespace: network-system
+spec:
+  externalTrafficPolicy: Local
+  ports:
+  - name: dns
+    port: 53
+    protocol: TCP
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: rpzhole
+  type: LoadBalancer
