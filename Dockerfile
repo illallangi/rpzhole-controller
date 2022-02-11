@@ -1,15 +1,17 @@
 # main image
-FROM alpine:edge
+FROM docker.io/library/debian:buster-20220125
 
-# install gosu from testing repo
+# install prerequisites
 RUN \
-  echo "@testing https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
-  apk update && \
-  apk add --upgrade apk-tools && \
-  apk add --upgrade bash curl gosu@testing kubectl@testing && \
-  rm -rf /var/cache/apk/*
+  apt-get update \
+  && \
+  apt-get install -y \
+    curl \
+    gosu \
+  && \
+  apt-get clean
 
 # add local files
-COPY custom-entrypoint generate-zonefile /usr/local/bin/
+COPY root/ /
 ENTRYPOINT ["custom-entrypoint"]
 CMD ["cat", "/zones/db.hole.rpz"]
