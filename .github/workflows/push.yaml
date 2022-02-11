@@ -13,6 +13,12 @@ jobs:
       id: version
       name: Bump version and push tag
       uses: anothrNick/github-tag-action@1.26.0
+    - name: Bump version in deploy.yaml
+      uses: jacobtomlinson/gha-find-replace@master
+      with:
+        find: ${{ github.repository }}:latest
+        include: deploy.yaml
+        replace: ${{ github.repository }}:${{ steps.version.outputs.new_tag }}
     - id: meta
       name: Docker meta
       uses: docker/metadata-action@v3
