@@ -14,4 +14,4 @@ RUN \
 # add local files
 COPY root/ /
 ENTRYPOINT ["custom-entrypoint"]
-CMD ["cat", "/zones/db.hole.rpz"]
+CMD ["cat", "/etc/coredns/zones/rpzholes.rpz"]
