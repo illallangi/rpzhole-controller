@@ -1,5 +1,5 @@
 # main image
-FROM docker.io/library/debian:buster-20220125
+FROM docker.io/library/debian:buster-20220509
 
 # install prerequisites
 RUN \
