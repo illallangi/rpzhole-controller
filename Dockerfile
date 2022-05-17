@@ -9,7 +9,7 @@ RUN \
     curl \
     gosu \
   && \
-  apt-get clean
+  rm -rf /var/lib/apt/lists/*
 
 # add local files
 COPY root/ /
