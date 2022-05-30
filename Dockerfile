@@ -1,5 +1,5 @@
 # main image
-FROM docker.io/library/debian:buster-20220509
+FROM docker.io/library/debian:buster-20220527
 
 # install prerequisites
 RUN apt-get update \
